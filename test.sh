@@ -25,7 +25,7 @@ setup_dirs() {
 #setup_dirs
 
 #
-# TODO: what's the underlying disk specs of the machine?
+# What's the underlying disk specs of the machine? I can't figure out.
 #   Not much from lshw
 #   $ lshw
 #     ubuntu@ip-10-164-205-205:~$ sudo lshw -class disk -class storage
@@ -52,11 +52,7 @@ setup_dirs() {
 #    Copyright (C) 2002-13, Bruce Allen, Christian Franke, www.smartmontools.org
 #
 #    /dev/xvda: Unable to detect device type
-
-# TODO: wanna repeat 10 times, each time with a new instance. to avoid any side
-# effects or any performance anomality, for example, from a bad VM, PM, or
-# networking.
-
+#
 # IO queue size
 #   [http://yoshinorimatsunobu.blogspot.com/2009/04/linux-io-scheduler-queue-size-and.html]
 #   $ cat /sys/block/xvda/queue/nr_requests
@@ -112,3 +108,15 @@ while [ 1 ]; do
 	sync
 	echo -n "."
 done
+
+# This basic test should be enough. 4K rand read / write and 100MiB sequential
+# write performance as a function local SSD fill rate.  Not 100% sure if this
+# verifies the same as Anandtech did. We'll see what the result is like.  If it
+# slows down, it's going to be a good research topic. Do the same with EBS SSD
+# too!
+
+# TODO: plot
+
+# TODO: wanna repeat 10 times, each time with a new instance. to avoid any side
+# effects or any performance anomality, for example, from a bad VM, PM, or
+# networking.
