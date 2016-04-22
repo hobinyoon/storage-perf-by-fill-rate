@@ -42,84 +42,20 @@ def _RunEc2Inst():
 					},
 				],
 			)
+			# What's the defalt value, when not specified? Might be True. I see the
+			# Basic CloudWatch monitoring on the web console.
+			# Monitoring={
+			#     'Enabled': True|False
+			# },
+			#
+			# "stop" when not specified.
+			#   InstanceInitiatedShutdownBehavior='stop'|'terminate',
 	Cons.P("Response:")
 	Cons.P(Util.Indent(pprint.pformat(response, indent=2, width=100), 2))
 	if len(response["Instances"]) != 1:
 		raise RuntimeError("len(response[\"Instances\"])=%d" % len(response["Instances"]))
 	inst_id = response["Instances"][0]["InstanceId"]
 	return inst_id
-
-	# TODO: test if working
-#			, BlockDeviceMappings=[
-#				{
-#					'VirtualName': 'string',
-#					'DeviceName': 'string',
-#					'Ebs': {
-#						'SnapshotId': 'string',
-#						'VolumeSize': 123,
-#						'DeleteOnTermination': True|False,
-#						'VolumeType': 'standard'|'io1'|'gp2'|'sc1'|'st1',
-#						'Iops': 123,
-#						'Encrypted': True|False
-#						},
-#					'NoDevice': 'string'
-#					},
-#				],
-
-			# TODO: what's the defalt value, when not specified?
-#     Monitoring={
-#         'Enabled': True|False
-#     },
-#     DisableApiTermination=True|False,
-#
-#			TODO: does this include reboot?
-#     InstanceInitiatedShutdownBehavior='stop'|'terminate',
-
-#				" --region us-east-1" \
-#				" -b \"/dev/sdc=:1638:true:gp2\""
-
-# response = boto3.run_instances(
-#     KeyName='string',
-#     UserData='string',
-#     Placement={
-#         'AvailabilityZone': 'string',
-#         'GroupName': 'string',
-#         'Tenancy': 'default'|'dedicated'|'host',
-#         'HostId': 'string',
-#         'Affinity': 'string'
-#     },
-#     KernelId='string',
-#     RamdiskId='string',
-#     SubnetId='string',
-#     PrivateIpAddress='string',
-#     ClientToken='string',
-#     AdditionalInfo='string',
-#     NetworkInterfaces=[
-#         {
-#             'NetworkInterfaceId': 'string',
-#             'DeviceIndex': 123,
-#             'SubnetId': 'string',
-#             'Description': 'string',
-#             'PrivateIpAddress': 'string',
-#             'Groups': [
-#                 'string',
-#             ],
-#             'DeleteOnTermination': True|False,
-#             'PrivateIpAddresses': [
-#                 {
-#                     'PrivateIpAddress': 'string',
-#                     'Primary': True|False
-#                 },
-#             ],
-#             'SecondaryPrivateIpAddressCount': 123,
-#             'AssociatePublicIpAddress': True|False
-#         },
-#     ],
-#     IamInstanceProfile={
-#         'Arn': 'string',
-#         'Name': 'string'
-#     },
-# )
 
 
 def _KeepCheckingInst(inst_id):
