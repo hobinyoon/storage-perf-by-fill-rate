@@ -1,7 +1,5 @@
 #/bin/bash
 
-LS0=/mnt/local-ssd0
-
 # Testing storage performance (local SSD, EBS SSD GP2) by fill rates.
 
 # To make an instance store volume with TRIM support available for use on Linux
@@ -10,16 +8,21 @@ LS0=/mnt/local-ssd0
 #   - I'm using an i2.xlarge instance.
 
 setup_dirs() {
-	sudo mkdir -p $LS0
+	echo -n "Setting up dirs ..."
+	sudo mkdir -p /mnt/local-ssd0
 
-	# Without nodiscard, it takes like 1 min for a 800GB SSD.
-	time sudo mkfs.ext4 -m 0 -E nodiscard -L local-ssd0 /dev/xvdb
+	# Without nodiscard, it takes about 80 secs for a 800GB SSD.
+	sudo umount /dev/xvdb
+	time sudo mkfs.ext4 -m 0 -L local-ssd0 /dev/xvdb
+	#time sudo mkfs.ext4 -m 0 -E nodiscard -L local-ssd0 /dev/xvdb
 
-	sudo mount -t ext4 -o discard /dev/xvdb $LS0
-	sudo chown -R ubuntu $LS0
-
-	mkdir -p /home/ubuntu/ebs-tmp
+	sudo mount -t ext4 -o discard /dev/xvdb /mnt/local-ssd0
+	sudo chown -R ubuntu /mnt/local-ssd0
+	echo
+	exit 0
 }
+
+#setup_dirs
 
 #
 # TODO: what's the underlying disk specs of the machine?
@@ -67,10 +70,6 @@ mkdir -p ioping-output
 FN_OUT=ioping-output/$DT_BEGIN
 touch $FN_OUT
 
-LS0_DN_RAND_DATA=$LS0/rand-data
-rm -rf $LS0_DN_RAND_DATA
-mkdir -p $LS0_DN_RAND_DATA
-
 measure() {
 	# Local SSD and EBS SSD directories
 	ES=/home/ubuntu/ebs-tmp
@@ -83,17 +82,33 @@ measure() {
 	# -q         : Suppress periodical human-readable output.
 	#ioping -p 100 -c 200 -i 0 -q
 
-	ioping -p 100 -c 100 -i 0      -q $LS0 >> $FN_OUT
-	ioping -p 100 -c 100 -i 0 -WWW -q $LS0 >> $FN_OUT
-	ioping -p 100 -c 100 -i 0      -q $ES  >> $FN_OUT
-	ioping -p 100 -c 100 -i 0 -WWW -q $ES  >> $FN_OUT
+	ioping -D -p 100 -c 100 -i 0              -q /mnt/local-ssd0/ioping-tmp >> $FN_OUT
+	ioping -D -p 100 -c 100 -i 0 -WWW         -q /mnt/local-ssd0/ioping-tmp >> $FN_OUT
+	ioping -D -p   1 -c   1 -i 0 -WWW -s 100m -q /mnt/local-ssd0/ioping-tmp >> $FN_OUT
+
+	ioping -D -p 100 -c 100 -i 0              -q /home/ubuntu/ioping-tmp >> $FN_OUT
+	ioping -D -p 100 -c 100 -i 0 -WWW         -q /home/ubuntu/ioping-tmp >> $FN_OUT
+	ioping -D -p   1 -c   1 -i 0 -WWW -s 100m -q /home/ubuntu/ioping-tmp >> $FN_OUT
 
 	# Report free spaces
 	df /dev/xvda1 /dev/xvdb >> $FN_OUT
 }
 
+
+LS0=/mnt/local-ssd0
+LS0_DN_RAND_DATA=$LS0/rand-data
+rm -rf $LS0_DN_RAND_DATA
+mkdir -p $LS0_DN_RAND_DATA
+dd if=/dev/zero of=$LS0_DN_RAND_DATA/zeros bs=1M count=100 > /dev/null 2>&1
+
+mkdir -p /mnt/local-ssd0/ioping-tmp
+mkdir -p /home/ubuntu/ioping-tmp
+
 while [ 1 ]; do
 	measure
-	dd if=/dev/urandom of=$LS0_DN_RAND_DATA/`date +"%y%m%d-%H%M%S.%N"` bs=1M count=20 > /dev/null 2>&1
+	# /dev/urandom too slow. http://serverfault.com/questions/6440/is-there-an-alternative-to-dev-urandom
+	#   dd if=/dev/urandom of=$LS0_DN_RAND_DATA/`date +"%y%m%d-%H%M%S.%N"` bs=1M count=20 > /dev/null 2>&1
+	openssl enc -aes-256-ctr -pass pass:"$(dd if=/dev/urandom bs=128 count=1 2>/dev/null | base64)" -nosalt < $LS0_DN_RAND_DATA/zeros > $LS0_DN_RAND_DATA/`date +"%y%m%d-%H%M%S.%N"`
+	sync
 	echo -n "."
 done
