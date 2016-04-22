@@ -98,6 +98,11 @@ def _MeasurePerf():
 	# ioping -D -p 100 -c 100 -i 0 -WWW         -q /home/ubuntu/ioping-tmp >> $_fn_log1
 	# ioping -D -p   1 -c   1 -i 0 -WWW -s 100m -q /home/ubuntu/ioping-tmp >> $_fn_log1
 
+	# writes/sec is below 1000. reads/sec is below 100. No need to worry about
+	# rate limiting.
+	#  $ collectl
+	#  $ iostat -xd 1
+
 	# Report free spaces
 	# df /dev/xvda1 /dev/xvdc >> $_fn_log1
 
