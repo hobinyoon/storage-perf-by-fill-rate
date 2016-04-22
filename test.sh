@@ -7,7 +7,7 @@
 #   - I2, R3's instance store volumes support TRIM
 #   - I'm using an i2.xlarge instance.
 
-setup_dirs() {
+setup_dirs_local_ssd0() {
 	echo -n "Setting up dirs ..."
 	sudo mkdir -p /mnt/local-ssd0
 
@@ -22,7 +22,22 @@ setup_dirs() {
 	exit 0
 }
 
-#setup_dirs
+setup_dirs_ebs_ssd1() {
+	echo -n "Setting up dirs ..."
+	sudo mkdir -p /mnt/ebs-ssd1
+
+	# Without nodiscard, it takes about 80 secs for a 800GB SSD.
+	sudo umount /dev/xvdc
+	time sudo mkfs.ext4 -m 0 -E nodiscard -L ebs-ssd1 /dev/xvdc
+
+	sudo mount -t ext4 -o discard /dev/xvdc /mnt/ebs-ssd1
+	sudo chown -R ubuntu /mnt/ebs-ssd1
+	echo
+	exit 0
+}
+
+#setup_dirs_local_ssd0
+#setup_dirs_ebs_ssd1
 
 #
 # What's the underlying disk specs of the machine? I can't figure out.
@@ -66,7 +81,7 @@ mkdir -p ioping-output
 FN_OUT=ioping-output/$DT_BEGIN
 touch $FN_OUT
 
-measure() {
+_measure_local_ssd() {
 	# Local SSD and EBS SSD directories
 	ES=/home/ubuntu/ebs-tmp
 
@@ -91,23 +106,69 @@ measure() {
 }
 
 
-LS0=/mnt/local-ssd0
-LS0_DN_RAND_DATA=$LS0/rand-data
-rm -rf $LS0_DN_RAND_DATA
-mkdir -p $LS0_DN_RAND_DATA
-dd if=/dev/zero of=$LS0_DN_RAND_DATA/zeros bs=1M count=100 > /dev/null 2>&1
+measure_local_ssd() {
+	LS0=/mnt/local-ssd0
+	LS0_DN_RAND_DATA=$LS0/rand-data
+	rm -rf $LS0_DN_RAND_DATA
+	mkdir -p $LS0_DN_RAND_DATA
+	dd if=/dev/zero of=$LS0_DN_RAND_DATA/zeros bs=1M count=100 > /dev/null 2>&1
 
-mkdir -p /mnt/local-ssd0/ioping-tmp
-mkdir -p /home/ubuntu/ioping-tmp
+	mkdir -p /mnt/local-ssd0/ioping-tmp
+	mkdir -p /home/ubuntu/ioping-tmp
 
-while [ 1 ]; do
-	measure
-	# /dev/urandom too slow. http://serverfault.com/questions/6440/is-there-an-alternative-to-dev-urandom
-	#   dd if=/dev/urandom of=$LS0_DN_RAND_DATA/`date +"%y%m%d-%H%M%S.%N"` bs=1M count=20 > /dev/null 2>&1
-	openssl enc -aes-256-ctr -pass pass:"$(dd if=/dev/urandom bs=128 count=1 2>/dev/null | base64)" -nosalt < $LS0_DN_RAND_DATA/zeros > $LS0_DN_RAND_DATA/`date +"%y%m%d-%H%M%S.%N"`
-	sync
-	echo -n "."
-done
+	while [ 1 ]; do
+		measure
+		# /dev/urandom too slow. http://serverfault.com/questions/6440/is-there-an-alternative-to-dev-urandom
+		#   dd if=/dev/urandom of=$LS0_DN_RAND_DATA/`date +"%y%m%d-%H%M%S.%N"` bs=1M count=20 > /dev/null 2>&1
+		openssl enc -aes-256-ctr -pass pass:"$(dd if=/dev/urandom bs=128 count=1 2>/dev/null | base64)" -nosalt < $LS0_DN_RAND_DATA/zeros > $LS0_DN_RAND_DATA/`date +"%y%m%d-%H%M%S.%N"`
+		sync
+		echo -n "."
+	done
+}
+
+_measure_ebs_ssd() {
+	date +"%y%m%d-%H%M%S.%N" >> $FN_OUT
+
+	# -p period  : Print raw statistics for every period requests.
+	# -c count   : Stop after count requests.
+	# -i interval: Set time between requests to interval (1s).
+	# -q         : Suppress periodical human-readable output.
+	#ioping -p 100 -c 200 -i 0 -q
+
+	ioping -D -p 100 -c 100 -i 0              -q /mnt/ebs-ssd1/ioping-tmp >> $FN_OUT
+	ioping -D -p 100 -c 100 -i 0 -WWW         -q /mnt/ebs-ssd1/ioping-tmp >> $FN_OUT
+	ioping -D -p   1 -c   1 -i 0 -WWW -s 100m -q /mnt/ebs-ssd1/ioping-tmp >> $FN_OUT
+
+	ioping -D -p 100 -c 100 -i 0              -q /home/ubuntu/ioping-tmp >> $FN_OUT
+	ioping -D -p 100 -c 100 -i 0 -WWW         -q /home/ubuntu/ioping-tmp >> $FN_OUT
+	ioping -D -p   1 -c   1 -i 0 -WWW -s 100m -q /home/ubuntu/ioping-tmp >> $FN_OUT
+
+	# Report free spaces
+	df /dev/xvda1 /dev/xvdc >> $FN_OUT
+}
+
+
+measure_ebs_ssd() {
+	DN_RAND_DATA=/mnt/ebs-ssd1/rand-data
+	rm -rf $DN_RAND_DATA
+	mkdir -p $DN_RAND_DATA
+	dd if=/dev/zero of=$DN_RAND_DATA/zeros bs=1M count=100 > /dev/null 2>&1
+
+	mkdir -p /mnt/ebs-ssd1/ioping-tmp
+	mkdir -p /home/ubuntu/ioping-tmp
+
+	while [ 1 ]; do
+		_measure_ebs_ssd
+		# /dev/urandom too slow. http://serverfault.com/questions/6440/is-there-an-alternative-to-dev-urandom
+		#   dd if=/dev/urandom of=$DN_RAND_DATA/`date +"%y%m%d-%H%M%S.%N"` bs=1M count=20 > /dev/null 2>&1
+		openssl enc -aes-256-ctr -pass pass:"$(dd if=/dev/urandom bs=128 count=1 2>/dev/null | base64)" -nosalt < $DN_RAND_DATA/zeros > $DN_RAND_DATA/`date +"%y%m%d-%H%M%S.%N"`
+		sync
+		echo -n "."
+	done
+}
+
+#measure_local_ssd
+measure_ebs_ssd
 
 # This basic test should be enough. 4K rand read / write and 100MiB sequential
 # write performance as a function local SSD fill rate.  Not 100% sure if this
