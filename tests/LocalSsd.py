@@ -91,20 +91,22 @@ def _MeasurePerf():
 	# -i interval: Set time between requests to interval (1s).
 	# -q         : Suppress periodical human-readable output.
 	#ioping -p 100 -c 200 -i 0 -q
-
+	#
 	# Meaningless, since data won't be stored here. Plus, the 8GB EBS SSD is rate
 	# limited, slowing down the experiment.
 	# ioping -D -p 100 -c 100 -i 0              -q /home/ubuntu/ioping-tmp >> $_fn_log1
 	# ioping -D -p 100 -c 100 -i 0 -WWW         -q /home/ubuntu/ioping-tmp >> $_fn_log1
 	# ioping -D -p   1 -c   1 -i 0 -WWW -s 100m -q /home/ubuntu/ioping-tmp >> $_fn_log1
-
+	#
 	# writes/sec is below 1000. reads/sec is below 100. No need to worry about
 	# rate limiting.
 	#  $ collectl
 	#  $ iostat -xd 1
-
+	#
 	# Report free spaces
 	# df /dev/xvda1 /dev/xvdb >> $_fn_log1
+	#
+	# I wonder if the order (4k rand read, 4k rand write, 100m write) matters. Hope not.
 
 	cmd = "(date +\"%%y%%m%%d-%%H%%M%%S\" >> %s)" \
 			" && (ioping -D -p 100 -c 100 -i 0              -q /mnt/local-ssd1/ioping-tmp >> %s)" \

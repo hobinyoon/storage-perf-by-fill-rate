@@ -1,0 +1,52 @@
+# Testing storage performance (local SSD, EBS SSD GP2) by fill rates.
+#
+# To make an instance store volume with TRIM support available for use on Linux
+#   [http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ssd-instance-store.html]
+#   - I2, R3's instance store volumes support TRIM
+#   - I'm using an i2.xlarge instance.
+#
+# What's the underlying disk specs of the machine? I can't figure out.
+#   Not much from lshw
+#   $ lshw
+#     ubuntu@ip-10-164-205-205:~$ sudo lshw -class disk -class storage
+#       *-ide
+#            description: IDE interface
+#            product: 82371SB PIIX3 IDE [Natoma/Triton II]
+#            vendor: Intel Corporation
+#            physical id: 1.1
+#            bus info: pci@0000:00:01.1
+#            version: 00
+#            width: 32 bits
+#            clock: 33MHz
+#            capabilities: ide bus_master
+#            configuration: driver=ata_piix latency=64
+#            resources: irq:0 ioport:1f0(size=8) ioport:3f6 ioport:170(size=8) ioport:376 ioport:c100(size=16)
+#
+# hdparm doesn't work
+# $ sudo hdparm -I /dev/xvdb
+#   /dev/xvdb:
+#    HDIO_DRIVE_CMD(identify) failed: Invalid argument
+#
+# $ sudo smartctl --all /dev/xvda
+#    smartctl 6.2 2013-07-26 r3841 [x86_64-linux-3.13.0-85-generic] (local build)
+#    Copyright (C) 2002-13, Bruce Allen, Christian Franke, www.smartmontools.org
+#
+#    /dev/xvda: Unable to detect device type
+#
+# IO queue size
+#   [http://yoshinorimatsunobu.blogspot.com/2009/04/linux-io-scheduler-queue-size-and.html]
+#   $ cat /sys/block/xvda/queue/nr_requests
+#     128
+#   $ cat /sys/block/xvdb/queue/nr_requests
+#     128
+#   Not sure how ioping goes with the queue size.
+#
+# This basic test should be enough. 4K rand read / write and 100MiB sequential
+# write performance as a function local SSD fill rate.  Not 100% sure if this
+# verifies the same as Anandtech did. We'll see what the result is like.  If it
+# slows down, it's going to be a good research topic. Do the same with EBS SSD
+# too.
+#
+# TODO: wanna repeat 10 times, each time with a new instance. to avoid any side
+# effects or any performance anomality, for example, from a bad VM, PM, or
+# networking.
