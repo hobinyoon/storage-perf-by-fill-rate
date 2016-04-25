@@ -16,13 +16,31 @@ def Run():
 		if _boto_client == None:
 			_boto_client = boto3.client("ec2")
 
-		inst_id = _RunEc2Inst()
+		inst_id = _RunEc2InstI2Xlarge()
 		_KeepCheckingInst(inst_id)
 
 
-def _RunEc2Inst():
+def _RunEc2InstI2Xlarge():
 	response = _boto_client.run_instances(
-			#DryRun = True
+			DryRun = False
+			, ImageId = "ami-1fc7d575"
+			, MinCount=1
+			, MaxCount=1
+			, SecurityGroups=["cass-server"]
+			, EbsOptimized=True
+			, InstanceType="i2.xlarge"
+			, Placement={'AvailabilityZone': 'us-east-1a' }
+			)
+	Cons.P("Response:")
+	Cons.P(Util.Indent(pprint.pformat(response, indent=2, width=100), 2))
+	if len(response["Instances"]) != 1:
+		raise RuntimeError("len(response[\"Instances\"])=%d" % len(response["Instances"]))
+	inst_id = response["Instances"][0]["InstanceId"]
+	return inst_id
+
+
+def _RunEc2InstR3XlargeEbs():
+	response = _boto_client.run_instances(
 			DryRun = False
 			, ImageId = "ami-1fc7d575"
 			, MinCount=1
@@ -42,6 +60,7 @@ def _RunEc2Inst():
 					},
 				],
 			)
+
 			# What's the defalt value, when not specified? Might be True. I see the
 			# Basic CloudWatch monitoring on the web console.
 			# Monitoring={
