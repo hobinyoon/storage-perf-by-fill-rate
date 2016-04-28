@@ -75,6 +75,11 @@ def Run():
 
 		# /dev/urandom too slow. http://serverfault.com/questions/6440/is-there-an-alternative-to-dev-urandom
 		#   dd if=/dev/urandom of=$dn_rand_data/`date +"%y%m%d-%H%M%S.%N"` bs=1M count=20 > /dev/null 2>&1
+		#
+		# When the device gets full, it raises an exception and terminates.
+		# It took 4 days and 12 hours to fill the 16TB EBS SSD volume.
+		#   start: 160422-220627
+		#   end  : 160427-093745
 		cmd = "(openssl enc -aes-256-ctr" \
 				" -pass pass:\"$(dd if=/dev/urandom bs=128 count=1 2>/dev/null | base64)\" -nosalt" \
 				" < %s/zeros >> %s)" \
