@@ -6,7 +6,7 @@ FN_OUT = system("echo $FN_OUT")
 set terminal pdfcairo enhanced size 2in, 1.5in
 set lmargin at screen 0.215
 set rmargin at screen 0.935
-set tmargin at screen 0.97
+set tmargin at screen 0.965
 set bmargin at screen 0.23
 
 set output FN_OUT
@@ -18,14 +18,15 @@ set border lc rgb "#808080"
 set grid back
 set xtics nomirror scale 0.5,0
 set ytics nomirror scale 0.5,0 ( \
-"10^4" 10000, \
-"10^3"  1000, \
-"10^2"   100, \
-"10^1"    10 \
+"10^5" 100000, \
+"10^4"  10000, \
+"10^3"   1000, \
+"10^2"    100, \
+"10^1"     10 \
 )
 
 set xrange [0 : 100]
-set yrange [10 : 10000]
+set yrange [10 : 100000]
 
 set logscale y
 

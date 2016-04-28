@@ -146,7 +146,7 @@ def MkDirs(path):
 def RunSubp(cmd, env_ = os.environ.copy(), print_cmd = True):
 	if print_cmd:
 		Cons.P(cmd)
-	p = subprocess.Popen(cmd, shell=True, env=env_, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+	p = subprocess.Popen(cmd.split(" "), env=env_, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
 	# communidate() waits for termination
 	stdouterr = p.communicate()[0]
 	rc = p.returncode
