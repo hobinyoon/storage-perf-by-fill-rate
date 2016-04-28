@@ -33,6 +33,12 @@ def _GenLocalSsdData(fn):
 	fn_plot_data = "plot-data/%s" % fn
 	fn_raw = "../log/ioping/%s" % fn
 
+	# Uncompress the raw files if not exist
+	if not os.path.isfile(fn_raw):
+		with Cons.MeasureTime("file %s doesn't exist. uncompressing from the archive" % fn_raw):
+			cmd = "7z x -o../log/ioping %s.7z" % fn_raw
+			Util.RunSubp(cmd)
+
 	# Generate one if not exist. Skip for now. It's fast enough.
 	#if os.path.isfile(fn_plot_data):
 	#	Cons.P("%s already exists" % fn_plot_data)
