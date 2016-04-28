@@ -47,7 +47,7 @@ def Run():
 			, datetime.datetime.now().strftime("%y%m%d-%H%M%S")
 			, ami_id
 			, public_ip)
-	_fn_log1 = "ioping-log/%s" % _fn_log0
+	_fn_log1 = "../log/ioping/%s" % _fn_log0
 
 	with Cons.MeasureTime("Setting up ..."):
 		dn_rand_data = "/mnt/ebs-ssd1/rand-data"
@@ -57,7 +57,7 @@ def Run():
 		Util.RunSubp("mkdir -p /mnt/ebs-ssd1/ioping-tmp")
 		#Cons.P("Logging to %s" % _fn_log0)
 
-		Util.RunSubp("mkdir -p ioping-log")
+		Util.RunSubp("mkdir -p ../log/ioping")
 		Util.RunSubp("touch %s" % _fn_log1)
 
 	fn_rand_data = None
@@ -96,18 +96,18 @@ def _MeasurePerf():
 	# -i interval: Set time between requests to interval (1s).
 	# -q         : Suppress periodical human-readable output.
 	#ioping -p 100 -c 200 -i 0 -q
-
+	#
 	# Meaningless, since data won't be stored here. Plus, the 8GB EBS SSD is rate
 	# limited, slowing down the experiment.
 	# ioping -D -p 100 -c 100 -i 0              -q /home/ubuntu/ioping-tmp >> $_fn_log1
 	# ioping -D -p 100 -c 100 -i 0 -WWW         -q /home/ubuntu/ioping-tmp >> $_fn_log1
 	# ioping -D -p   1 -c   1 -i 0 -WWW -s 100m -q /home/ubuntu/ioping-tmp >> $_fn_log1
-
+	#
 	# writes/sec is below 1000. reads/sec is below 100. No need to worry about
 	# rate limiting.
 	#  $ collectl
 	#  $ iostat -xd 1
-
+	#
 	# Report free spaces
 	# df /dev/xvda1 /dev/xvdc >> $_fn_log1
 

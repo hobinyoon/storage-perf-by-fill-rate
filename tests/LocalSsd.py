@@ -47,7 +47,7 @@ def Run():
 			, datetime.datetime.now().strftime("%y%m%d-%H%M%S")
 			, ami_id
 			, public_ip)
-	_fn_log1 = "ioping-log/%s" % _fn_log0
+	_fn_log1 = "../log/ioping/%s" % _fn_log0
 
 	with Cons.MeasureTime("Setting up ..."):
 		dn_rand_data = "/mnt/local-ssd1/rand-data"
@@ -57,7 +57,7 @@ def Run():
 		Util.RunSubp("mkdir -p /mnt/local-ssd1/ioping-tmp")
 		#Cons.P("Logging to %s" % _fn_log0)
 
-		Util.RunSubp("mkdir -p ioping-log")
+		Util.RunSubp("mkdir -p ../log/ioping")
 		Util.RunSubp("touch %s" % _fn_log1)
 
 	fn_rand_data = None
