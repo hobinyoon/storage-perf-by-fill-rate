@@ -16,12 +16,12 @@ import Util
 
 
 def Setup():
-	with Cons.MeasureTime("Setting up EBS SSD ..."):
+	with Cons.MeasureTime("Setting up local SSD ..."):
 		Util.RunSubp("sudo mkdir -p /mnt/local-ssd1")
 		Util.RunSubp("sudo umount /dev/xvdb || true")
 
-		# EBS volumes come TRIMmed when they are allocated.  Without nodiscard, it
-		# takes about 80 secs for a 800GB SSD.
+		# Instance store volumes come TRIMmed when they are allocated.  Without
+		# nodiscard, it takes about 80 secs for a 800GB SSD.
 		Util.RunSubp("sudo mkfs.ext4 -m 0 -E nodiscard -L local-ssd1 /dev/xvdb")
 
 		# -o discard for TRIM

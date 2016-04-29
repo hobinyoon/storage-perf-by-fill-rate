@@ -20,8 +20,7 @@ def Setup():
 		Util.RunSubp("sudo mkdir -p /mnt/ebs-ssd1")
 		Util.RunSubp("sudo umount /dev/xvdc || true")
 
-		# EBS volumes come TRIMmed when they are allocated.  Without nodiscard, it
-		# takes about 80 secs for a 800GB SSD.
+		# TODO: Are EBS volumes come TRIMmed when they are allocated?
 		Util.RunSubp("sudo mkfs.ext4 -m 0 -E nodiscard -L ebs-ssd1 /dev/xvdc")
 
 		# -o discard for TRIM
